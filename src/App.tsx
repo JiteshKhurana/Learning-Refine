@@ -1,52 +1,69 @@
-import { GitHubBanner, Refine, WelcomePage } from "@refinedev/core";
-import { DevtoolsPanel, DevtoolsProvider } from "@refinedev/devtools";
-import { RefineKbar, RefineKbarProvider } from "@refinedev/kbar";
-
-import { useNotificationProvider } from "@refinedev/antd";
-import "@refinedev/antd/dist/reset.css";
-
+import { Refine } from "@refinedev/core";
+import {
+  ThemedLayoutV2,
+  useNotificationProvider,
+  ErrorComponent,
+  RefineThemes,
+} from "@refinedev/antd";
 import routerBindings, {
-  DocumentTitleHandler,
+  NavigateToResource,
   UnsavedChangesNotifier,
 } from "@refinedev/react-router-v6";
 import dataProvider from "@refinedev/simple-rest";
-import { App as AntdApp } from "antd";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { ColorModeContextProvider } from "./contexts/color-mode";
+import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
+import { AntdInferencer } from "@refinedev/inferencer/antd";
 
-function App() {
+import { ConfigProvider } from "antd";
+import "@refinedev/antd/dist/reset.css";
+
+const App: React.FC = () => {
   return (
     <BrowserRouter>
-      <GitHubBanner />
-      <RefineKbarProvider>
-        <ColorModeContextProvider>
-          <AntdApp>
-            <DevtoolsProvider>
-              <Refine
-                notificationProvider={useNotificationProvider}
-                routerProvider={routerBindings}
-                dataProvider={dataProvider("https://api.fake-rest.refine.dev")}
-                options={{
-                  syncWithLocation: true,
-                  warnWhenUnsavedChanges: true,
-                  useNewQueryKeys: true,
-                  projectId: "ihyC7o-Erf5fO-MiLemW",
-                }}
-              >
-                <Routes>
-                  <Route index element={<WelcomePage />} />
-                </Routes>
-                <RefineKbar />
-                <UnsavedChangesNotifier />
-                <DocumentTitleHandler />
-              </Refine>
-              <DevtoolsPanel />
-            </DevtoolsProvider>
-          </AntdApp>
-        </ColorModeContextProvider>
-      </RefineKbarProvider>
+      <ConfigProvider theme={RefineThemes.Red}>
+        <Refine
+          routerProvider={routerBindings}
+          dataProvider={dataProvider("https://api.fake-rest.refine.dev")}
+          notificationProvider={useNotificationProvider}
+          resources={[
+            {
+              name: "blog_posts",
+              list: "/blog-posts",
+              show: "/blog-posts/show/:id",
+              create: "/blog-posts/create",
+              edit: "/blog-posts/edit/:id",
+            },
+          ]}
+          options={{
+            syncWithLocation: true,
+            warnWhenUnsavedChanges: true,
+          }}
+        >
+          <Routes>
+            <Route
+              element={
+                <ThemedLayoutV2>
+                  <Outlet />
+                </ThemedLayoutV2>
+              }
+            >
+              <Route
+                index
+                element={<NavigateToResource resource="blog_posts" />}
+              />
+              <Route path="blog-posts">
+                <Route index element={<AntdInferencer />} />
+                <Route path="show/:id" element={<AntdInferencer />} />
+                <Route path="edit/:id" element={<AntdInferencer />} />
+                <Route path="create" element={<AntdInferencer />} />
+              </Route>
+              <Route path="*" element={<ErrorComponent />} />
+            </Route>
+          </Routes>
+          <UnsavedChangesNotifier />
+        </Refine>
+      </ConfigProvider>
     </BrowserRouter>
   );
-}
+};
 
 export default App;
